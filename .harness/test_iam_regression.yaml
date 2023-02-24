@@ -1,0 +1,80 @@
+pipeline:
+  name: Test IAM Regression
+  identifier: IAM
+  projectIdentifier: Test_Harness
+  orgIdentifier: default
+  properties:
+    ci:
+      codebase:
+        connectorRef: Github_API_Connector
+        repoName: code.capitalrx.com
+        build: <+input>
+  stages:
+    - stage:
+        name: Test IAM Regression
+        identifier: Test_IAM_Regression
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Test IAM Regression
+                  identifier: Test_IAM_Regression
+                  spec:
+                    connectorRef: Docker_image
+                    image: capharnessadmin/base_build_image
+                    shell: Sh
+                    command: |-
+                      aws configure set aws_access_key_id <+secrets.getValue("AWS_ACCESS_KEY")>
+                      aws configure set aws_secret_access_key <+secrets.getValue("AWS_SECRET_KEY")>
+                      aws configure set region us-east-1
+                      find . -name '*.sh' -type f | xargs -r chmod +x
+                      curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+                      ./bin/regression/run_playwright_regression.sh \
+                      "capitalrx_iam_ui_automation" "iam.capitalrx.com/bin/serve.sh" "^(iam|common|dev|build|sts|bin|codebuild|configs|storybook).*"
+                    envVariables:
+                      DOCKER_IMG_BUILD: cicd
+                      CAPITALRX_ENVIRONMENT_PREFIX: build-
+                      CAPITALRX_AWS_TEST: "1"
+                      CAPITALRX_ADJUDICATION_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_adjudication
+                      CAPITALRX_APP_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_app
+                      CAPITALRX_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_test
+                      CAPITALRX_DATAEXCHANGE_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_test_dataexchange
+                      CAPITALRX_DATAWAREHOUSE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_test_dw
+                      CAPITALRX_SNOWFLAKE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_snowflake
+                      CAPITALRX_DEV_AWS_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_dev_aws
+                      CAPITALRX_IAM_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_iam
+                      CAPITALRX_AUDIT_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_audit
+                      CAPITALRX_PA_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_pa
+                      CAPITALRX_SURESCRIPTS_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_surescripts
+                      CAPITALRX_UNDERWRITING_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_underwriting
+                      CAPITALRX_PERFORMANCE_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_performance
+                      CAPITALRX_FINANCE_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_formulary
+                      CAPITALRX_FORMULARY_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_finance
+                      CAPITALRX_REPORTING_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_reporting
+                      CAPITALRX_DMP_DATABASE_URL: postgresql://capitalrx:capitalrx@127.0.0.1/capitalrx_dmp
+                      CAPITALRX_UI_AUTOMATION_BROWSER: chromium
+                      CAPITALRX_UI_AUTOMATION_OUTPUT_S3: iam
+                      CAPITALRX_UI_AUTOMATION_URL: http://localhost:9000
+                      CAPITALRX_UI_AUTOMATION_GITHUB_WEBHOOK: IAM-Test_IAM_Regression
+                      GITHUB_OAUTH_TOKEN: <+secrets.getValue("GITHUB_OAUTH_TOKEN")>
+                      GIT_COMMIT: <+codebase.commitSha>
+                      DISABLE_SQLALCHEMY_CEXT: "1"
+                      CAPITALRX_SETUP_TERRAFORM: "1"
+                      CAPITALRX_ENVIRONMENT: build
+                      FLASK_ENV: test
+                      MIGRATE_DATABASES: "1"
+                      CAPITALRX_NO_EMAILS: "1"
+                      CIRCLE_BUILD_URL: CIRCLE_BUILD_URL
+        variables: []
+  tags: {}
+  variables: []
